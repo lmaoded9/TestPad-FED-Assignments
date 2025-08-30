@@ -1,0 +1,131 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Simple Hangman</title>
+  <style>
+    body {
+      background: #f0f0f0;
+      text-align: center;
+      font-family: Arial;
+      margin: 20px;
+    }
+    .letters button {
+      margin: 3px;
+      padding: 5px 10px;
+      cursor: pointer;
+    }
+    .letters button:disabled {
+      background: #ccc;
+    }
+    .word {
+      margin: 15px;
+      font-size: 24px;
+      letter-spacing: 5px;
+    }
+    .question {
+      margin: 15px;
+    }
+    .result {
+      margin: 15px;
+      font-weight: bold;
+    }
+  </style>
+</head>
+<body>
+
+  <h1>Hangman</h1>
+  <p>Guess the word by clicking the letters below!</p>
+  <div class="letters"></div>
+  <div class="question"></div>
+  <div class="word"></div>
+  <div class="lives">Lives: 10</div>
+  <div class="result"></div>
+
+  <script>
+    const apiURL = "http://codeapi.net.cws18.my-hosting-panel.com/hangman.php";
+    
+    let question = "";
+    let answer = "";
+    let guessWord = [];
+    let lives = 10;
+
+    // Create letter buttons
+    function makeButtons() {
+      let letters = document.querySelector(".letters");
+      for (let i = 65; i <= 90; i++) {
+        let btn = document.createElement("button");
+        btn.innerHTML = String.fromCharCode(i);
+        btn.onclick = function() { guessLetter(this); };
+        letters.appendChild(btn);
+      }
+    }
+
+    // Get question from API
+    async function getQuestion() {
+      try {
+        let response = await fetch(apiURL);
+        let data = await response.json();
+        let randomQ = data[Math.floor(Math.random() * data.length)];
+        question = randomQ.Question;
+        answer = randomQ.Answer.toUpperCase();
+        guessWord = "_".repeat(answer.length).split("");
+        updateDisplay();
+      } catch (e) {
+        question = "What is the Capital of Himachal Pradesh ?";
+        answer = "SHIMLA";
+        guessWord = "_".repeat(answer.length).split("");
+        updateDisplay();
+      }
+    }
+
+    // Update the display
+    function updateDisplay() {
+      document.querySelector(".question").innerHTML = question;
+      document.querySelector(".word").innerHTML = guessWord.join(" ");
+      document.querySelector(".lives").innerHTML = "Lives: " + lives;
+    }
+
+    // Check guessed letter
+    function guessLetter(btn) {
+      let letter = btn.innerHTML;
+      btn.disabled = true;
+
+      if (answer.includes(letter)) {
+        for (let i = 0; i < answer.length; i++) {
+          if (answer[i] === letter) {
+            guessWord[i] = letter;
+          }
+        }
+      } else {
+        lives--;
+      }
+      
+      updateDisplay();
+      checkWinLose();
+    }
+
+    // Check if game is won or lost
+    function checkWinLose() {
+      if (!guessWord.includes("_")) {
+        document.querySelector(".result").innerHTML = "You Won!!!!!!!!!";
+        stopGame();
+      }
+      if (lives <= 0) {
+        document.querySelector(".result").innerHTML = "Game Over! The word was: " + answer;
+        stopGame();
+      }
+    }
+
+    // Disable all buttons when game ends
+    function stopGame() {
+      let buttons = document.querySelectorAll(".letters button");
+      buttons.forEach(btn => btn.disabled = true);
+    }
+
+    // Start the game
+    makeButtons();
+    getQuestion();
+  </script>
+</body>
+</html>
